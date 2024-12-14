@@ -25,7 +25,14 @@ pub fn init_repository(path: &Path) {
         version: package_version,
     };
 
-    let pkg_def = create_repo(path, repo_info);
+    let pkg_def = match create_repo(path, repo_info) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("{}: {}", "Failed to create repository".red(), e);
+            return;
+        }
+    };
+
     println!(
         "Initialized repository for {} version {}",
         pkg_def.info.name.yellow(),
