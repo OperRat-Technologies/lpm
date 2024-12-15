@@ -1,3 +1,4 @@
+use crate::luarocks::formats::rockspec::RockSpec;
 use crate::luarocks::luarocks_repo::{
     LuaRocksNamespaceRepo, LuaRocksRepoPackage, LuaRocksRepoPackageVersion,
 };
@@ -120,4 +121,42 @@ pub async fn load_namespace_repository(
     }
 
     parse_namespace_repo_from_lua(&repo_lua, &namespace)
+}
+
+pub async fn load_package_rockspec(
+    repo: &str,
+    namespace: &str,
+    package: &str,
+    version: &str,
+) -> Result<RockSpec, String> {
+    let uri = format!(
+        "{}/manifests/{}/{}-{}.rockspec",
+        repo, namespace, package, version
+    );
+    let request = match reqwest::get(uri.as_str()).await {
+        Ok(content) => content,
+        Err(_) => return Err("Failed to request package manifest".to_string()),
+    };
+
+    match request.error_for_status_ref() {
+        Ok(_) => (),
+        Err(e) => {
+            let status = e.status().unwrap();
+            return match status {
+                reqwest::StatusCode::NOT_FOUND => Err("Not found".to_string()),
+                _ => Err(status.to_string()),
+            };
+        }
+    }
+
+    let response_text = match request.text().await {
+        Ok(text) => text,
+        Err(_) => return Err("Failed to read package manifest".to_string()),
+    };
+
+    let lua = Lua::new();
+    match lua.load(response_text).eval::<RockSpec>() {
+        Ok(r) => Ok(r),
+        Err(e) => Err(format!("Failed to parse package manifest: {}", e)),
+    }
 }

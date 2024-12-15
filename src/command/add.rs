@@ -1,4 +1,5 @@
 use crate::luarocks::luarocks;
+use crate::luarocks::luarocks::load_package_rockspec;
 use crate::repository::repository;
 use colored::Colorize;
 use std::path::Path;
@@ -18,6 +19,7 @@ fn validate_package_name(name: &str) -> Result<(&str, &str), &str> {
 }
 
 pub async fn add_package(name: &str, version: &Option<String>) {
+    let repo_url = "https://luarocks.org";
     if !repository::check_if_folder_is_a_repo(Path::new(".")) {
         println!("{}", "Current folder is not a repository".yellow());
         return;
@@ -33,14 +35,13 @@ pub async fn add_package(name: &str, version: &Option<String>) {
 
     println!("{}", "Loading remote repository...".dimmed());
 
-    let repo =
-        match luarocks::load_namespace_repository("https://luarocks.org", pkg_namespace).await {
-            Ok(x) => x,
-            Err(e) => {
-                println!("{}: {}", "Failed to load remote repository".red(), e);
-                return;
-            }
-        };
+    let repo = match luarocks::load_namespace_repository(repo_url, pkg_namespace).await {
+        Ok(x) => x,
+        Err(e) => {
+            println!("{}: {}", "Failed to load remote repository".red(), e);
+            return;
+        }
+    };
 
     println!("{}", "Searching for package...".dimmed());
 
@@ -80,9 +81,24 @@ pub async fn add_package(name: &str, version: &Option<String>) {
                     .collect::<Vec<String>>()
                     .join(", ")
             );
-            std::process::exit(0);
+            return;
         }
     };
 
-    println!("{:?}", pkg_version);
+    let pkg_rockspec = match load_package_rockspec(
+        repo_url.to_lowercase().as_str(),
+        pkg_namespace.to_lowercase().as_str(),
+        pkg_name.to_lowercase().as_str(),
+        pkg_version.version.as_str(),
+    )
+    .await
+    {
+        Ok(x) => x,
+        Err(e) => {
+            println!("Failed to load package Rock spec: {}", e);
+            return;
+        }
+    };
+
+    println!("{:?}", pkg_rockspec);
 }
