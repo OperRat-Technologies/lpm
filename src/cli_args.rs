@@ -16,4 +16,6 @@ pub enum Commands {
         name: String,
         version: Option<String>,
     },
+    /// Clears the local repository
+    Clear,
 }
