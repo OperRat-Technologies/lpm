@@ -6,8 +6,9 @@ edition = "2021"
 [dependencies]
 toml = "0.8.19"
 serde = { version = "1.0.215", features = ["derive"] }
-colored = "2.1.0"
+colored = "3.0.0"
 clap = { version = "4.5.23", features = ["derive"] }
 reqwest = "0.12.9"
 mlua = { version = "0.10.2", features = ["lua54", "vendored"] }
 tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+git2 = "0.20.0"
