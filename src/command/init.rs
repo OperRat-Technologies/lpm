@@ -1,5 +1,4 @@
-use crate::repository::package_def::RepoInfo;
-use crate::repository::repository::create_repo;
+use crate::repository::lpm_repository::{LPMRepository, LPMRepositoryInfo};
 use colored::Colorize;
 use std::io;
 use std::io::Write;
@@ -20,12 +19,14 @@ pub fn init_repository(path: &Path) {
     io::stdin().read_line(&mut package_version).unwrap();
     package_version = package_version.trim().to_string();
 
-    let repo_info = RepoInfo {
+    let repo_info = LPMRepositoryInfo {
         name: package_name,
         version: package_version,
     };
 
-    let pkg_def = match create_repo(path, repo_info) {
+    let pkg_def = LPMRepository::new(repo_info, path.to_path_buf());
+
+    match pkg_def.write_to_file() {
         Ok(p) => p,
         Err(e) => {
             println!("{}: {}", "Failed to create repository".red(), e);

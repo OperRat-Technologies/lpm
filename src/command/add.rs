@@ -1,6 +1,6 @@
 use crate::luarocks::luarocks;
 use crate::luarocks::luarocks::load_package_rockspec;
-use crate::repository::repository;
+use crate::repository::lpm_repository::LPMRepository;
 use colored::Colorize;
 use std::path::Path;
 
@@ -20,10 +20,18 @@ fn validate_package_name(name: &str) -> Result<(&str, &str), &str> {
 
 pub async fn add_package(name: &str, version: &Option<String>) {
     let repo_url = "https://luarocks.org";
-    if !repository::check_if_folder_is_a_repo(Path::new(".")) {
+    if !LPMRepository::is_folder_repository(Path::new(".")) {
         println!("{}", "Current folder is not a repository".yellow());
         return;
     }
+
+    let mut lpm_repo = match LPMRepository::load_from_path(Path::new(".")) {
+        Ok(lpmRepo) => lpmRepo,
+        Err(e) => {
+            println!("{}: {}", "Failed to load local repository".red(), e);
+            return;
+        }
+    };
 
     let (pkg_namespace, pkg_name) = match validate_package_name(name) {
         Ok(x) => x,
@@ -100,5 +108,18 @@ pub async fn add_package(name: &str, version: &Option<String>) {
         }
     };
 
-    println!("{:?}", pkg_rockspec);
+    match lpm_repo.add_package(&pkg_rockspec) {
+        Ok(_) => {
+            println!(
+                "{} {} {}",
+                "Successfully added package".green(),
+                pkg_namespace,
+                pkg_version.version.as_str()
+            );
+        }
+        Err(e) => {
+            println!("{}: {}", "Failed to add package".red(), e);
+            return;
+        }
+    }
 }
