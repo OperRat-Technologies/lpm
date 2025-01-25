@@ -1,3 +1,4 @@
 /target
 package.toml
+package.lock.toml
 /lua_rocks
