@@ -25,8 +25,8 @@ pub async fn add_package(name: &str, version: &Option<String>) {
         return;
     }
 
-    let mut lpm_repo = match LPMRepository::load_from_path(Path::new(".")) {
-        Ok(lpmRepo) => lpmRepo,
+    let mut lpm_repo = match LPMRepository::load_from_cur_dir() {
+        Ok(lpm_repo) => lpm_repo,
         Err(e) => {
             println!("{}: {}", "Failed to load local repository".red(), e);
             return;
