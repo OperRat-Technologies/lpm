@@ -9,13 +9,22 @@ jobs:
     name: Compile (${{ matrix.os }})
     strategy:
       matrix:
-        os: [ windows-latest, ubuntu-latest, macos-latest ]
+        os: [ windows-latest, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+      - name: Linux Specific dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y libx11-dev libpng-dev
+      - name: Configure Project
+        uses: threeal/cmake-action@v2.1.0
+        with:
+          run-build: false
       - name: Compile
         run: cargo build --release
       - name: Upload Executable
@@ -48,11 +57,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist-ubuntu-latest
-          path: "./binaries/"
-      - name: Download Mac OS Binary
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-macos-latest
           path: "./binaries/"
       - name: Create Release
         uses: softprops/action-gh-release@v2
