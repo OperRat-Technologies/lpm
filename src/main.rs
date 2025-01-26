@@ -19,6 +19,11 @@ async fn main() {
         Commands::Init {} => init_repository(Path::new(".")),
         Commands::Add { name, version } => add::add_package(name, version).await,
         Commands::Clear {} => clear::clear_local_repository(),
-        Commands::Bundle { entry, upload, out } => bundle::bundle_files(entry, upload, out).await,
+        Commands::Bundle {
+            entry,
+            upload,
+            clipboard,
+            out,
+        } => bundle::bundle_files(entry, upload, clipboard, out).await,
     }
 }

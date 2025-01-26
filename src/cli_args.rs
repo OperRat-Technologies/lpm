@@ -28,5 +28,8 @@ pub enum Commands {
         /// Output file, if omitted and now uploaded, the result will be written to "bundle.lua"
         #[arg(long)]
         out: Option<String>,
+        /// Copy the output to the clipboard instead of writing to a file or uploading
+        #[arg(long)]
+        clipboard: bool,
     },
 }
