@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub struct LuaRocksNamespaceRepo {
+    #[allow(dead_code)]
     pub namespace: String,
     pub packages: Vec<LuaRocksRepoPackage>,
 }
@@ -45,6 +46,7 @@ impl LuaRocksRepoPackage {
 #[derive(Debug)]
 pub struct LuaRocksRepoPackageVersion {
     pub version: String,
+    #[allow(dead_code)]
     pub arch: String,
 }
 

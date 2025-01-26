@@ -4,9 +4,11 @@ use mlua::{FromLua, Lua};
 #[derive(Debug)]
 pub struct RockSpec {
     // metadata
+    #[allow(dead_code)]
     pub rockspec_format: Option<String>,
     pub package: String,
     pub version: String,
+    #[allow(dead_code)]
     pub description: Option<RockSpecDescription>,
 
     pub source: RockSpecSource,
@@ -46,6 +48,7 @@ impl FromLua for RockSpecSource {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct RockSpecDescription {
     pub summary: Option<String>,
     pub detailed: Option<String>,
