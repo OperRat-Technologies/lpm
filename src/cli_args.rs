@@ -18,4 +18,15 @@ pub enum Commands {
     },
     /// Clears the local repository
     Clear,
+    /// Bundle,
+    Bundle {
+        /// Entry point for the bundle
+        entry: String,
+        /// Whether to upload the bundle to somewhere
+        #[arg(long)]
+        upload: bool,
+        /// Output file, if omitted and now uploaded, the result will be written to "bundle.lua"
+        #[arg(long)]
+        out: Option<String>,
+    },
 }

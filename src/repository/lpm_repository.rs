@@ -61,6 +61,10 @@ impl LPMRepository {
         Ok(loaded_repository)
     }
 
+    pub fn load_from_cur_dir() -> Result<Self, String> {
+        Self::load_from_path(&Path::new("."))
+    }
+
     pub fn write_to_file(&self) -> Result<(), String> {
         let package_serialized = match toml::to_string(&self) {
             Ok(package_serialized) => package_serialized,
