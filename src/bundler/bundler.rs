@@ -33,6 +33,8 @@ impl LuaBundler {
         self.sources
             .insert("entry_point".to_string(), entry_point_src);
 
+        let sorted_modules = self.sort_sources();
+
         println!(
             "{} {} {}: [{}]",
             "Bundling".cyan(),
@@ -48,7 +50,7 @@ impl LuaBundler {
         let mut bundle = String::new();
         bundle.push_str("local modules = {}\n");
 
-        self.sources.iter().for_each(|(module, src)| {
+        sorted_modules.iter().for_each(|(module, src)| {
             bundle.push_str(format!("-- Begin: {} module\n", module).as_str());
             bundle.push_str(format!("modules['{}'] = (function()\n", module).as_str());
 
@@ -57,13 +59,19 @@ impl LuaBundler {
             let module_transformed_code =
                 regex.replace_all(&src.source, |caps: &regex::Captures| {
                     match self.sources.contains_key(&caps[1]) {
-                        true => format!("modules[\"{}\"]()", &caps[1]),
+                        true => format!("modules[\"{}\"]", &caps[1]),
                         false => format!("require('{}')", &caps[1]),
                     }
                 });
 
             bundle.push_str(module_transformed_code.to_string().as_str());
-            bundle.push_str("\nend)\n");
+            bundle.push_str(
+                format!(
+                    "\nend){}\n",
+                    if module != "entry_point" { "()" } else { "" }
+                )
+                .as_str(),
+            );
             bundle.push_str(format!("-- End: {} module\n", module).as_str());
         });
 
@@ -79,6 +87,71 @@ impl LuaBundler {
         );
 
         Ok(bundle)
+    }
+
+    fn sort_sources(&mut self) -> Vec<(String, CodeSrcFile)> {
+        let mut sources = self.sources.clone();
+        let mut sorted: Vec<(String, CodeSrcFile)> = vec![];
+
+        let project_sources = sources.keys().cloned().collect::<Vec<String>>();
+        println!(
+            "{} {} {}",
+            "Sorting".cyan(),
+            sources.len(),
+            "sources...".cyan()
+        );
+
+        // First pass: just add anything that doesn't have any dependencies or just external ones
+        sources.iter().for_each(|(src_module, src)| {
+            if src.requires.is_empty() || src.requires.iter().all(|dep| !sources.contains_key(dep))
+            {
+                sorted.push((src_module.clone(), (*src).clone()));
+            }
+        });
+        sorted.iter().for_each(|(k, _)| {
+            sources.remove(k);
+        });
+
+        println!(
+            "{}: {}/{}",
+            "First Pass".cyan(),
+            sorted.len(),
+            self.sources.len() - 1
+        );
+
+        let mut pass = 2;
+
+        // Second to N pass, now repeat until all sources are in order
+        while !sources.is_empty() {
+            sources.iter().for_each(|(src_module, src)| {
+                if src
+                    .requires
+                    .iter()
+                    .filter(|dep| project_sources.contains(dep))
+                    .all(|dep| sorted.iter().any(|(module, _)| module == dep))
+                {
+                    sorted.push((src_module.clone(), (*src).clone()));
+                }
+            });
+            sorted.iter().for_each(|(k, _)| {
+                sources.remove(k);
+            });
+
+            println!(
+                "{} {}: {}/{}",
+                "Pass".cyan(),
+                pass,
+                sorted.len(),
+                self.sources.len()
+            );
+            pass += 1;
+
+            if pass > 100 {
+                panic!();
+            }
+        }
+
+        sorted
     }
 
     fn recursive_dependency_check(&mut self, dep_name: &String) {

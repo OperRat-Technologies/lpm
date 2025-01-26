@@ -2,7 +2,7 @@ use regex::Regex;
 use std::fs;
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CodeSrcFile {
     path: PathBuf,
 
