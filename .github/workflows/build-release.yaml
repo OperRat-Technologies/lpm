@@ -1,0 +1,61 @@
+name: Build Release
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  build:
+    name: Compile (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Compile
+        run: cargo build --release
+      - name: Upload Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'dist-${{ matrix.os }}'
+          path: "target/release/lpm${{ matrix.os == 'windows-latest' && '.exe' || '' }}"
+
+  publish:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download Windows Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-windows-latest
+          path: "./binaries/"
+      - name: Download Linux Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-ubuntu-latest
+          path: "./binaries/"
+      - name: Download Mac OS Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-macos-latest
+          path: "./binaries/"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          draft: false
+          tag_name: ${{ github.ref_name }}
+          files: ./binaries/*
