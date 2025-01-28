@@ -5,19 +5,37 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
-  build:
-    name: Compile (${{ matrix.os }})
-    strategy:
-      matrix:
-        os: [ windows-latest, ubuntu-latest ]
-    runs-on: ${{ matrix.os }}
+  build-windows:
+    name: Build Windows binaries
+    runs-on: windows-latest
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Linux Specific dependencies
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install CMake
+        uses: ssrobins/install-cmake@v1
+      - name: Compile
+        run: cargo build --release
+      - name: Rename Binaries
+        run: mv target/release/lpm.exe ./lpm-windows.exe
+      - name: Generate Checksums
+        run: CertUtil -hashfile lpm-windows.exe SHA256 | findstr /v "hash" > lpm-windows.exe.sha256
+      - name: Upload Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'dist-windows'
+          path: './lpm-windows*'
+
+  build-linux:
+    name: Build Linux binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux Specific dependencies
         run: |
           sudo apt update
           sudo apt install -y libx11-dev libpng-dev
@@ -25,41 +43,53 @@ jobs:
         uses: ssrobins/install-cmake@v1
       - name: Compile
         run: cargo build --release
+      - name: Rename Binaries
+        run: |
+          mv target/release/lpm ./lpm-linux
+          chmod +x lpm-linux
+      - name: Generate Checksums
+        run: sha256sum ./lpm-linux > ./lpm-linux.sha256
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
-          name: 'dist-${{ matrix.os }}'
-          path: "target/release/lpm${{ matrix.os == 'windows-latest' && '.exe' || '' }}"
+          name: 'dist-linux'
+          path: './lpm-linux*'
 
   publish:
     name: Create Release
-    needs: build
+    needs: [ build-windows, build-linux ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pages: write
       id-token: write
     concurrency:
-      group: "pages"
+      group: 'pages'
       cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download Windows Binary
+      - name: Extract Release Notes
+        uses: ffurrer2/extract-release-notes@v2.2.0
+        id: extract-release-notes
+      - name: Download Windows Binaries
         uses: actions/download-artifact@v4
         with:
           name: dist-windows-latest
-          path: "./binaries/"
-      - name: Download Linux Binary
+          path: './binaries/'
+      - name: Download Linux Binaries
         uses: actions/download-artifact@v4
         with:
           name: dist-ubuntu-latest
-          path: "./binaries/"
+          path: './binaries/'
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           draft: false
+          body: ${{ steps.extract-release-notes.outputs.release_notes }}
+          make_latest: true
+          prerelease: false
           tag_name: ${{ github.ref_name }}
           files: ./binaries/*

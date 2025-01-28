@@ -32,4 +32,6 @@ pub enum Commands {
         #[arg(long)]
         clipboard: bool,
     },
+    /// Upgrades the lpm installation
+    Upgrade,
 }
