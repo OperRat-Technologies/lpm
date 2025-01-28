@@ -70,6 +70,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
       - name: Extract Release Notes
         uses: ffurrer2/extract-release-notes@v2.2.0
         id: extract-release-notes
