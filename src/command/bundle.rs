@@ -1,12 +1,24 @@
 use crate::bundler::bundler::LuaBundler;
+use crate::bundler::minifier;
 use crate::uploader;
 use colored::Colorize;
 use std::fs;
 use std::path::Path;
 
-pub async fn bundle_files(entry: &String, upload: &bool, clipboard: &bool, out: &Option<String>) {
+pub async fn bundle_files(
+    entry: &String,
+    upload: &bool,
+    clipboard: &bool,
+    minify: &bool,
+    out: &Option<String>,
+) {
     let mut bundler = LuaBundler::new();
-    let bundle_str = bundler.bundle(Path::new(&entry)).unwrap();
+    let mut bundle_str = bundler.bundle(Path::new(&entry)).unwrap();
+
+    if *minify {
+        let minified_bundle = minifier::minify(&bundle_str);
+        bundle_str = minified_bundle;
+    }
 
     if *clipboard {
         let mut clipboard = clippers::Clipboard::get();

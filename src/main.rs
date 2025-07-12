@@ -8,6 +8,7 @@ use std::path::Path;
 mod bundler;
 mod cli_args;
 mod command;
+mod compiler;
 mod luarocks;
 mod repository;
 mod uploader;
@@ -24,8 +25,9 @@ async fn main() {
             entry,
             upload,
             clipboard,
+            minify,
             out,
-        } => bundle::bundle_files(entry, upload, clipboard, out).await,
+        } => bundle::bundle_files(entry, upload, clipboard, minify, out).await,
         Commands::Upgrade {} => upgrade_lpm_installation().await.unwrap(),
     }
 }

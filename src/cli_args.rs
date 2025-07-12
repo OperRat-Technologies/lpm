@@ -31,6 +31,9 @@ pub enum Commands {
         /// Copy the output to the clipboard instead of writing to a file or uploading
         #[arg(long)]
         clipboard: bool,
+        /// Minify the output bundle
+        #[arg(long)]
+        minify: bool,
     },
     /// Upgrades the lpm installation
     Upgrade,
