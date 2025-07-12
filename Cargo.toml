@@ -1,10 +1,10 @@
 [package]
 name = "lpm"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 
 [dependencies]
-toml = "0.8.19"
+toml = "0.9.2"
 serde = { version = "1.0.215", features = ["derive"] }
 colored = "3.0.0"
 clap = { version = "4.5.23", features = ["derive"] }
