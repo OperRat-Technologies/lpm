@@ -8,6 +8,8 @@ jobs:
   build-windows:
     name: Build Windows binaries
     runs-on: windows-latest
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: 3.5
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
@@ -30,6 +32,8 @@ jobs:
   build-linux:
     name: Build Linux binaries
     runs-on: ubuntu-latest
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: 3.5
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
